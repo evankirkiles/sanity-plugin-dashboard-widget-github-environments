@@ -1,19 +1,21 @@
-# Sanity Dashboard Widget: GitHub Actions
+# Sanity Dashboard Widget: GitHub Environments
 
 > This is a **Sanity Studio v3** plugin.
 
-Sanity Studio Dashboard Widget for triggering GitHub Actions.
+This is a Sanity dashboard widget for viewing recent Github Environment deployments. This is useful if your build pipeline runs in GitHub actions and produces deployments in a Github environment. Additionally, the widget can further be configured with a webhook that has a `manual_dispatch` trigger, allowing you to re-run your build step Github action to create new deployments, all from within the Sanity Studio.
+
+For example, we use this with an Astro site to manage creating new, up-to-date SSG builds in the production environment from an on-demand, SSR-based `preview` environment.
 
 ## Install
 
 ```
-npm install --save sanity-plugin-dashboard-widget-github-actions
+npm install --save sanity-plugin-dashboard-widget-github-environments
 ```
 
 or
 
 ```
-yarn add sanity-plugin-dashboard-widget-github-actions
+yarn add sanity-plugin-dashboard-widget-github-environments
 ```
 
 Ensure that you have followed install and usage instructions for [@sanity/dashboard](https://github.com/sanity-io/dashboard).
@@ -24,30 +26,29 @@ Add it as a widget to @sanity/dashboard plugin in sanity.config.ts (or .js):
 
 ```js
 import {dashboardTool} from '@sanity/dashboard'
-import {githubWidget} from 'sanity-plugin-dashboard-widget-github-actions'
+import {githubEnvironmentsWidget} from 'sanity-plugin-dashboard-widget-github-environments'
 
 export default defineConfig({
   // ...
   plugins: [
     dashboardTool({
       widgets: [
-        githubWidget({
-          title: 'My Netlify deploys',
-          sites: [
-            {
-              title: 'Sanity Studio',
-              apiId: 'xxxxx-yyyy-zzzz-xxxx-yyyyyyyy',
-              buildHookId: 'xxxyyyxxxyyyyxxxyyy',
-              name: 'sanity-gatsby-blog-20-studio',
+        githubEnvironmentsWidget({
+          title: 'Production Environment',
+          environmentName: "My Website",
+          environmentUrl: "https://mywebsite.com",
+          github: {
+            owner: "my-github-username",
+            repo: "my-github-repo",
+            environment: "my-github-environment-name",
+            octokitConfig: {
+              auth: GITHUB_ACCESS_TOKEN,
             },
-            {
-              title: 'Website',
-              apiId: 'yyyyy-xxxxx-zzzz-xxxx-yyyyyyyy',
-              buildHookId: 'yyyyxxxxxyyyxxdxxx',
-              name: 'sanity-gatsby-blog-20-web',
-              url: 'https://my-sanity-deployment.com',
+            workflowDispatch: {
+              workflowId: "build.production.yml",
+              ref: "main",
             },
-          ],
+          },
         }),
       ],
     }),
@@ -59,14 +60,21 @@ export default defineConfig({
 
 `title` - Override the widget default title
 
-`sites[]` - Your Netlify sites to show deploys for
+`environmentName` – Override the Github environment's display name
 
-- `apiId`- The Netfliy API ID of your site (see _Site Settings > General > Site Details > Site Information -> API ID_).
-- `buildHookId` - The id of a build hook you have created for your site within the Netlify administration panel (see _Site Settings > Build & Deploy > Continuous Deployment -> Build Hooks_).
-- `name` - The Netlify site name
-- `title` - Override the site name with a custom title
-- `url` - Optionally override site deployment url. By default it is inferred to be `https://netlify-site-name.netlify.app`.
-- `branch` - Optionally pass the name of a branch to deploy
+`environmentUrl` – Add a "main URL" for the Github environment
+
+`disableIFrame` – Turns off the IFrame preview of the `environmentUrl`
+
+`github` - Configuration for your existing Github environment
+
+- `owner` - The account owner of the repository
+- `repo` - The name of the repository
+- `environment` – The name of the Github environment
+- `octokitConfig` – Configuration object to pass to the `octokit.js` instance to provide authentication
+- `workflowDispatch` – (Optional) Configuration for dispatching the workflow that makes new Environment deployments
+- – `workflowId` - The ID of the workflow. You can also pass the workflow file name as a string.
+- – `ref` - The git reference for the workflow. The reference can be a branch or a tag name.
 
 ## License
 
